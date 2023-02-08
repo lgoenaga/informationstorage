@@ -1,0 +1,32 @@
+.contenedor-usuarios {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid;
+  border-radius: 15px;
+  margin-top: 50px;
+}
+
+.d-flex {
+  justify-content: center;
+}
+
+@media screen and (min-width: 725px) {
+  .container-fluid p {
+    font-size: small;
+  }
+}
+
+@media (max-width: 720px) {
+
+  .container-fluid p {
+    font-size: small;
+  }
+}
+
+@media (max-width: 560px) {
+
+  .container-fluid p {
+    font-size: xx-small;
+  }
+}
