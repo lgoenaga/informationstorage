@@ -1,5 +1,5 @@
 import axios from 'axios';
 
 export const Axios = axios.create({
-  baseURL: "http://localhost:3005",
+  baseURL: "http://bebdcampana-f7a3itl72q-uc.a.run.app",
 });
