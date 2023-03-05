@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Container } from "react-bootstrap";
+import Swal from "sweetalert2";
 
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
@@ -9,6 +10,8 @@ import Row from "react-bootstrap/Row";
 
 import { updateCiudadano, getCiudadano } from "../../routes/contactos";
 
+import { AuthHeaders } from "../../components/authheader";
+
 export const UpdateCiudadano = () => {
   const navigate = useNavigate();
   const { documentoId } = useParams();
@@ -16,6 +19,9 @@ export const UpdateCiudadano = () => {
   const [valoresForm, setValoresForm] = useState({});
 
   const [ciudadano, setCiudadano] = useState({});
+  const [validated, setValidated] = useState(false);
+
+  const [errors, setErrors] = useState({});
 
   const {
     identification = "",
@@ -24,6 +30,14 @@ export const UpdateCiudadano = () => {
     firstSurname = "",
     secondSurname = "",
     dateBirth = "",
+    cellPhone = "",
+    phone = "",
+    email = "",
+    facebook = "",
+    instagram = "",
+    address = "",
+    neighborhood = "",
+    urbanization = "",
   } = valoresForm;
 
   useEffect(() => {
@@ -35,7 +49,20 @@ export const UpdateCiudadano = () => {
         console.log("Ciudadano no existe");
       }
     };
-    mostrarcontacto();
+
+    Swal.fire({
+      icon: "info",
+      title: "Actualizar Ciudadano",
+      showConfirmButton: false,
+      timer: 1000,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+    setTimeout(() => {
+      Swal.close();
+      mostrarcontacto();
+    }, 1000);
   }, [documentoId]);
 
   useEffect(() => {
@@ -46,17 +73,56 @@ export const UpdateCiudadano = () => {
       firstSurname: ciudadano.firstSurname,
       secondSurname: ciudadano.secondSurname,
       dateBirth: ciudadano.dateBirth,
+      cellPhone: ciudadano.cellPhone,
+      phone: ciudadano.phone,
+      email: ciudadano.email,
+      facebook: ciudadano.facebook,
+      instagram: ciudadano.instagram,
+      address: ciudadano.address,
+      neighborhood: ciudadano.neighborhood,
+      urbanization: ciudadano.urbanization,
     });
   }, [ciudadano]);
+
+  const findFormErrors = () => {
+    console.log("Entre a la busqueda de errores");
+    const { identification, firstName, firstSurname, cellPhone, email } =
+      valoresForm;
+    const newErrors = {};
+
+    if (!identification || identification === "")
+      newErrors.identification = "cannot be blank!";
+
+    if (!firstName || firstName === "") {
+      newErrors.firstName = "cannot be blank!";
+    }
+
+    if (!firstSurname || firstSurname === "") {
+      newErrors.firstSurname = "cannot be blank!";
+    }
+
+    if (!cellPhone || cellPhone === "") {
+      newErrors.cellPhone = "cannot be blank!";
+    } else {
+      if (cellPhone.length < 10)
+        newErrors.cellPhone = "CellPhone too short! Minimum 10 numeros";
+    }
+
+    if (!email || email === "") {
+      newErrors.email = "cannot be blank!";
+    } else {
+      if (email.length < 6) newErrors.email = "wrong mail format!";
+    }
+
+    return newErrors;
+  };
 
   const handleOnChange = ({ target }) => {
     const { name, value } = target;
     setValoresForm({ ...valoresForm, [name]: value });
   };
 
-  const handleOnSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleOnSubmit = async (event) => {
     const ciudadano = {
       identification,
       firstName,
@@ -64,23 +130,124 @@ export const UpdateCiudadano = () => {
       firstSurname,
       secondSurname,
       dateBirth,
+      cellPhone,
+      phone,
+      email,
+      facebook,
+      instagram,
+      address,
+      neighborhood,
+      urbanization,
     };
 
-    let data = "";
-    try {
-      data = await updateCiudadano(documentoId, ciudadano);
-      console.log("Ciudadano actualizado correctamente");
-      console.log(data);
-      navigate("/contactos");
-    } catch (error) {
-      console.log("Ciudadano no se pudo actualizar");
+    const newErrors = findFormErrors();
+
+    if (Object.keys(newErrors).length > 0) {
+      console.log("Encontre errores");
+      setErrors(newErrors);
     }
+
+    const form = event.currentTarget;
+    console.log(form.checkValidity());
+    if (form.checkValidity() === false) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    setValidated(true);
+
+    Swal.fire({
+      title: "Desea Actualizar el Ciudadano? ",
+      html: "Updating will be canceled in 10 <strong></strong> seconds.",
+      timer: 10000,
+      timerProgressBar: true,
+      showDenyButton: true,
+      showConfirmButton: true,
+      confirmButtonText: "Update",
+      denyButtonText: "Not update",
+    }).then(async (result) => {
+      let data = "";
+      try {
+        if (result.isConfirmed) {
+          const authheader = AuthHeaders();
+          data = await updateCiudadano(documentoId, ciudadano, authheader);
+          Swal.fire({
+            icon: "success",
+            title: "Usuario Actualizado",
+            showConfirmButton: false,
+            timer: 2000,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+          });
+          setTimeout(() => {
+            Swal.close();
+            navigate("/contactos");
+          }, 2000);
+        } else {
+          if (result.isDenied) {
+            Swal.fire({
+              icon: "info",
+              title: "Usuario no ha sido actualizado",
+              showConfirmButton: false,
+              timer: 2000,
+              didOpen: () => {
+                Swal.showLoading();
+              },
+            });
+            setTimeout(() => {
+              Swal.close();
+            }, 2000);
+          }
+        }
+        if (result.dismiss === Swal.DismissReason.timer) {
+          Swal.fire({
+            icon: "error",
+            title: "Se ha superado el tiempo sin una respuesta",
+            showConfirmButton: false,
+            timer: 2000,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+          });
+          setTimeout(() => {
+            Swal.close();
+          }, 2000);
+        }
+      } catch (error) {
+        let mensaje;
+        const newErrors = findFormErrors();
+
+        if (Object.keys(newErrors).length > 0) {
+          mensaje = "Error en las validaciones";
+        } else {
+          mensaje = error.response.data;
+        }
+        Swal.fire({
+          icon: "error",
+          title: mensaje,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+        Swal.showLoading();
+      } finally {
+        if (data) {
+          setTimeout(() => {
+            Swal.close();
+          }, 2000);
+        }
+      }
+    });
+  };
+
+  const pageHome = () => {
+    navigate("/inicio");
   };
 
   return (
     <>
       <Container className="contenedor-datosPersonales">
-        <Form className="formDatosPersonales">
+        <Form className="formDatosPersonales" noValidate validated={validated}>
           <Form.Label>Datos Personales</Form.Label>
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formGridCedula">
@@ -91,7 +258,11 @@ export const UpdateCiudadano = () => {
                 name="identification"
                 value={identification}
                 onChange={(e) => handleOnChange(e)}
+                required
               />
+              <Form.Control.Feedback type="invalid">
+                {errors.identification}
+              </Form.Control.Feedback>
             </Form.Group>
             <Form.Group as={Col} controlId="formGridBirthDate">
               <Form.Label>Fecha de Nacimiento</Form.Label>
@@ -113,7 +284,11 @@ export const UpdateCiudadano = () => {
                 name="firstName"
                 value={firstName}
                 onChange={(e) => handleOnChange(e)}
+                required
               />
+              <Form.Control.Feedback type="invalid">
+                {errors.firstName}
+              </Form.Control.Feedback>
             </Form.Group>
             <Form.Group as={Col} controlId="formGridSecondName">
               <Form.Label>Segundo Nombre</Form.Label>
@@ -135,9 +310,12 @@ export const UpdateCiudadano = () => {
                 name="firstSurname"
                 value={firstSurname}
                 onChange={(e) => handleOnChange(e)}
+                required
               />
+              <Form.Control.Feedback type="invalid">
+                {errors.firstSurname}
+              </Form.Control.Feedback>
             </Form.Group>
-
             <Form.Group as={Col} controlId="formGridSecondSurname">
               <Form.Label>Segundo Apellido</Form.Label>
               <Form.Control
@@ -152,47 +330,96 @@ export const UpdateCiudadano = () => {
         </Form>
       </Container>
       <Container className="contenedorContactoUbicacion">
-        <Form className="formDatosContacto">
+        <Form className="formDatosContacto" noValidate validated={validated}>
           <Form.Label>Datos de Contacto</Form.Label>
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formGridCelular">
               <Form.Label>Teléfono celular</Form.Label>
-              <Form.Control type="text" placeholder="Teléfono Celular" />
+              <Form.Control
+                type="text"
+                placeholder="Teléfono Celular"
+                name="cellPhone"
+                value={cellPhone}
+                onChange={(e) => handleOnChange(e)}
+                minLength="10"
+                maxLength="10"
+                required
+              />
             </Form.Group>
             <Form.Group as={Col} controlId="formGridTelefono">
               <Form.Label>Teléfono fijo</Form.Label>
-              <Form.Control type="text" placeholder="Teléfono fijo" />
+              <Form.Control
+                type="text"
+                placeholder="Teléfono fijo"
+                name="phone"
+                value={phone}
+                onChange={(e) => handleOnChange(e)}
+              />
             </Form.Group>
           </Row>
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formGridEmail">
               <Form.Label>Correo electrónico</Form.Label>
-              <Form.Control type="text" placeholder="Correo electrónico" />
+              <Form.Control
+                type="email"
+                placeholder="Correo electrónico"
+                name="email"
+                value={email}
+                onChange={(e) => handleOnChange(e)}
+                required
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.email}
+              </Form.Control.Feedback>
             </Form.Group>
           </Row>
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formGridFacebook">
               <Form.Label>Facebook</Form.Label>
-              <Form.Control type="text" placeholder="Facebook" />
+              <Form.Control
+                type="text"
+                placeholder="Facebook"
+                name="facebook"
+                value={facebook}
+                onChange={(e) => handleOnChange(e)}
+              />
             </Form.Group>
             <Form.Group as={Col} controlId="formGridInstagram">
               <Form.Label>Instagram</Form.Label>
-              <Form.Control type="text" placeholder="Instagram" />
+              <Form.Control
+                type="text"
+                placeholder="Instagram"
+                name="instagram"
+                value={instagram}
+                onChange={(e) => handleOnChange(e)}
+              />
             </Form.Group>
           </Row>
         </Form>
-        <Form className="formDatosUbicacion">
+        <Form className="formDatosUbicacion" noValidate validated={validated}>
           <Form.Label>Datos de Ubicacion</Form.Label>
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formGridCelular">
               <Form.Label>Dirección</Form.Label>
-              <Form.Control type="text" placeholder="Dirección" />
+              <Form.Control
+                type="text"
+                placeholder="Dirección"
+                name="address"
+                value={address}
+                onChange={(e) => handleOnChange(e)}
+              />
             </Form.Group>
           </Row>
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formGridTelefono">
               <Form.Label>Barrio / Vereda</Form.Label>
-              <Form.Control type="text" placeholder="Barrio / Vereda" />
+              <Form.Control
+                type="text"
+                placeholder="Barrio / Vereda"
+                name="neighborhood"
+                value={neighborhood}
+                onChange={(e) => handleOnChange(e)}
+              />
             </Form.Group>
           </Row>
           <Row className="mb-3">
@@ -201,6 +428,9 @@ export const UpdateCiudadano = () => {
               <Form.Control
                 type="text"
                 placeholder="Urbanización / otros datos de ubicación"
+                name="urbanization"
+                value={urbanization}
+                onChange={(e) => handleOnChange(e)}
               />
             </Form.Group>
           </Row>
@@ -209,6 +439,9 @@ export const UpdateCiudadano = () => {
       <Container className="button-contactos">
         <Button variant="info" onClick={handleOnSubmit}>
           actualizar
+        </Button>
+        <Button variant="info" onClick={pageHome}>
+          INICIO
         </Button>
       </Container>
     </>

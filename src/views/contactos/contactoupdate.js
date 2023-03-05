@@ -1,12 +1,12 @@
 import React from "react";
 import { UpdateCiudadano } from "../../services/contactos/contactoupdate";
-import BarraNavegacion from "../../components/header";
+//import BarraNavegacion from "../../components/header";
 import Footer from "../../components/footer";
 
 const ViewUpdateCiudadano = () => {
   return (
     <>
-      <BarraNavegacion />
+      <h1>ACTUALIZAR CIUDADANO</h1>
       <UpdateCiudadano />
       <Footer />
     </>

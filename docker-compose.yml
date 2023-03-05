@@ -1,11 +1,13 @@
 version: "3.7"
 services:
- bfbdcampana:
-  container_name: bfbdcampana
-  image: lgoenaga/bfbdcampana:V1
+ fecampana:
+  container_name: fecampana
+  image: fecampana:V1
+  build:
+   context: .
   ports:
    - 3000:3000
   networks:
-   - bfbdcampana
+   - fecampana
 networks:
- bfbdcampana:
+ fecampana:

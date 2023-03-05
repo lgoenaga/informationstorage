@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import moment from "moment";
+import React, { useState, useEffect } from "react";
 import { Container } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
@@ -10,11 +10,63 @@ import Row from "react-bootstrap/Row";
 
 import { createCiudadano } from "../../routes/contactos";
 
+import { AuthHeaders } from "../../components/authheader";
+
 export function CrearRegistroCiudadano() {
   const navigate = useNavigate();
   const [validated, setValidated] = useState(false);
 
   const [valoresForm, setValoresForm] = useState({});
+  //const [formValidation, setformValidation] = useState({});
+
+  const [errors, setErrors] = useState({});
+
+  const authheader = AuthHeaders();
+
+  useEffect(() => {
+    Swal.fire({
+      icon: "info",
+      title: "Crear Ciudadano",
+      showConfirmButton: false,
+      timer: 1000,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+  }, []);
+
+  const findFormErrors = () => {
+    console.log("Entre a la busqueda de errores");
+    const { identification, firstName, firstSurname, cellPhone, email } =
+      valoresForm;
+    const newErrors = {};
+
+    if (!identification || identification === "")
+      newErrors.identification = "cannot be blank!";
+
+    if (!firstName || firstName === "") {
+      newErrors.firstName = "cannot be blank!";
+    }
+
+    if (!firstSurname || firstSurname === "") {
+      newErrors.firstSurname = "cannot be blank!";
+    }
+
+    if (!cellPhone || cellPhone === "") {
+      newErrors.cellPhone = "cannot be blank!";
+    } else {
+      if (cellPhone.length < 10)
+        newErrors.cellPhone = "CellPhone too short! Minimum 10 numeros";
+    }
+
+    if (!email || email === "") {
+      newErrors.email = "cannot be blank!";
+    } else {
+      if (email.length < 6) newErrors.email = "wrong mail format!";
+    }
+
+    return newErrors;
+  };
 
   const {
     identification = "",
@@ -23,11 +75,24 @@ export function CrearRegistroCiudadano() {
     firstSurname = "",
     secondSurname = "",
     dateBirth = "",
+    cellPhone = "",
+    phone = "",
+    email = "",
+    facebook = "",
+    instagram = "",
+    address = "",
+    neighborhood = "",
+    urbanization = "",
   } = valoresForm;
 
   const handleOnChange = ({ target }) => {
     const { name, value } = target;
     setValoresForm({ ...valoresForm, [name]: value });
+    //   setformValidation({ ...valoresForm, [name]: value });
+  };
+
+  const pageHome = () => {
+    navigate("/inicio");
   };
 
   const handleOnSubmit = async (event) => {
@@ -37,6 +102,13 @@ export function CrearRegistroCiudadano() {
     if (form.checkValidity() === false) {
       event.preventDefault();
       event.stopPropagation();
+    }
+
+    const newErrors = findFormErrors();
+
+    if (Object.keys(newErrors).length > 0) {
+      console.log("Encontre errores");
+      setErrors(newErrors);
     }
 
     setValidated(true);
@@ -50,17 +122,112 @@ export function CrearRegistroCiudadano() {
       firstSurname,
       secondSurname,
       dateBirth,
+      cellPhone,
+      phone,
+      email,
+      facebook,
+      instagram,
+      address,
+      neighborhood,
+      urbanization,
     };
 
-    try {
-      data = await createCiudadano(ciudadano);
+    Swal.fire({
+      title: "Desea guardar el Ciudadano? ",
+      html: "Saving will be canceled in 10 <strong></strong> seconds.",
+      timer: 10000,
+      timerProgressBar: true,
+      showDenyButton: true,
+      showCancelButton: true,
+      showConfirmButton: true,
+      cancelButtonText: "Cancel",
+      confirmButtonText: "Save",
+      denyButtonText: "Not Save",
+    }).then(async (result) => {
+      try {
+        if (result.isConfirmed) {
+          data = await createCiudadano(ciudadano, authheader);
 
-      console.log("Usuario creado");
-      console.log(data);
-      navigate("/contactos");
-    } catch (error) {
-      console.log("Usuario no ha sido creado,", error);
-    }
+          Swal.fire({
+            icon: "success",
+            title: "Ciudadano creado",
+            showConfirmButton: false,
+            timer: 2000,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+          });
+          setTimeout(() => {
+            Swal.close();
+            navigate("/contactos");
+          }, 2000);
+        } else {
+          if (result.isDenied) {
+            Swal.fire({
+              icon: "info",
+              title: "Ciudadano no ha sido creado",
+              showConfirmButton: false,
+              timer: 2000,
+              didOpen: () => {
+                Swal.showLoading();
+              },
+            });
+            setTimeout(() => {
+              Swal.close();
+            }, 2000);
+          }
+        }
+        if (result.dismiss === Swal.DismissReason.timer) {
+          Swal.fire({
+            icon: "error",
+            title: "Se ha superado el tiempo sin una respuesta",
+            showConfirmButton: false,
+            timer: 2000,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+          });
+          setTimeout(() => {
+            Swal.close();
+          }, 2000);
+        }
+
+        if (result.dismiss === "cancel") {
+          Swal.fire({
+            icon: "error",
+            title: "Se ha cancelado la creación del ciudadano",
+            showConfirmButton: false,
+            timer: 3000,
+          });
+          Swal.showLoading();
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        }
+      } catch (error) {
+        let mensaje;
+        const newErrors = findFormErrors();
+
+        if (Object.keys(newErrors).length > 0) {
+          mensaje = "Error en las validaciones";
+        } else {
+          mensaje = error.response.data;
+        }
+        Swal.fire({
+          icon: "error",
+          title: mensaje,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+        Swal.showLoading();
+      } finally {
+        if (data) {
+          setTimeout(() => {
+            Swal.close();
+          }, 2000);
+        }
+      }
+    });
   };
 
   return (
@@ -77,7 +244,6 @@ export function CrearRegistroCiudadano() {
               <Form.Group as={Col} controlId="formGridCedula">
                 <Form.Label>Cédula</Form.Label>
                 <Form.Control
-                  className="entrada-datos"
                   type="text"
                   placeholder="Entrar Cédula"
                   name="identification"
@@ -86,7 +252,7 @@ export function CrearRegistroCiudadano() {
                   required
                 />
                 <Form.Control.Feedback type="invalid">
-                  No puede estar vacio
+                  {errors.identification}
                 </Form.Control.Feedback>
               </Form.Group>
               <Form.Group as={Col} controlId="formGridBirthDate">
@@ -95,7 +261,7 @@ export function CrearRegistroCiudadano() {
                   placeholder="Fecha de Nacimiento"
                   name="dateBirth"
                   type="date"
-                  value={moment(dateBirth).format("DD-MMM-YYYY")}
+                  value={dateBirth}
                   onChange={(e) => handleOnChange(e)}
                 />
               </Form.Group>
@@ -112,7 +278,7 @@ export function CrearRegistroCiudadano() {
                   required
                 />
                 <Form.Control.Feedback type="invalid">
-                  No puede estar vacio
+                  {errors.firstName}
                 </Form.Control.Feedback>
               </Form.Group>
               <Form.Group as={Col} controlId="formGridSecondName">
@@ -138,10 +304,9 @@ export function CrearRegistroCiudadano() {
                   required
                 />
                 <Form.Control.Feedback type="invalid">
-                  No puede estar vacio
+                  {errors.firstSurname}
                 </Form.Control.Feedback>
               </Form.Group>
-
               <Form.Group as={Col} controlId="formGridSecondSurname">
                 <Form.Label>Segundo Apellido</Form.Label>
                 <Form.Control
@@ -156,55 +321,110 @@ export function CrearRegistroCiudadano() {
           </Form>
         </Container>
         <Container className="contenedorContactoUbicacion">
-          <Form className="formDatosContacto">
+          <Form className="formDatosContacto" noValidate validated={validated}>
             <Form.Label>Datos de Contacto</Form.Label>
             <Row className="mb-3 fila-data">
               <Form.Group as={Col} controlId="formGridCelular">
                 <Form.Label>Teléfono celular</Form.Label>
-                <Form.Control type="text" placeholder="Teléfono Celular" />
+                <Form.Control
+                  type="text"
+                  placeholder="Teléfono Celular"
+                  name="cellPhone"
+                  value={cellPhone}
+                  onChange={(e) => handleOnChange(e)}
+                  minLength="10"
+                  maxLength="10"
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.cellPhone}
+                </Form.Control.Feedback>
               </Form.Group>
               <Form.Group as={Col} controlId="formGridTelefono">
                 <Form.Label>Teléfono fijo</Form.Label>
-                <Form.Control type="text" placeholder="Teléfono fijo" />
+                <Form.Control
+                  type="text"
+                  placeholder="Teléfono fijo"
+                  name="phone"
+                  value={phone}
+                  onChange={(e) => handleOnChange(e)}
+                />
               </Form.Group>
             </Row>
             <Row className="mb-3 fila-data">
               <Form.Group as={Col} controlId="formGridEmail">
                 <Form.Label>Correo electrónico</Form.Label>
-                <Form.Control type="text" placeholder="Correo electrónico" />
+                <Form.Control
+                  type="email"
+                  placeholder="Correo electrónico"
+                  name="email"
+                  value={email}
+                  onChange={(e) => handleOnChange(e)}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.email}
+                </Form.Control.Feedback>
               </Form.Group>
             </Row>
             <Row className="mb-3 fila-data">
               <Form.Group as={Col} controlId="formGridFacebook">
                 <Form.Label>Facebook</Form.Label>
-                <Form.Control type="text" placeholder="Facebook" />
+                <Form.Control
+                  type="text"
+                  placeholder="Facebook"
+                  name="facebook"
+                  value={facebook}
+                  onChange={(e) => handleOnChange(e)}
+                />
               </Form.Group>
               <Form.Group as={Col} controlId="formGridInstagram">
                 <Form.Label>Instagram</Form.Label>
-                <Form.Control type="text" placeholder="Instagram" />
+                <Form.Control
+                  type="text"
+                  placeholder="Instagram"
+                  name="instagram"
+                  value={instagram}
+                  onChange={(e) => handleOnChange(e)}
+                />
               </Form.Group>
             </Row>
           </Form>
-          <Form className="formDatosUbicacion">
+          <Form className="formDatosUbicacion" noValidate validated={validated}>
             <Form.Label>Datos de Ubicacion</Form.Label>
             <Row className="mb-3 fila-data">
-              <Form.Group as={Col} controlId="formGridCelular">
+              <Form.Group as={Col} controlId="formGridDireccion">
                 <Form.Label>Dirección</Form.Label>
-                <Form.Control type="text" placeholder="Dirección" />
+                <Form.Control
+                  type="text"
+                  placeholder="Dirección"
+                  name="address"
+                  value={address}
+                  onChange={(e) => handleOnChange(e)}
+                />
               </Form.Group>
             </Row>
             <Row className="mb-3 fila-data">
-              <Form.Group as={Col} controlId="formGridTelefono">
+              <Form.Group as={Col} controlId="formGridBarrio">
                 <Form.Label>Barrio / Vereda</Form.Label>
-                <Form.Control type="text" placeholder="Barrio / Vereda" />
+                <Form.Control
+                  type="text"
+                  placeholder="Barrio / Vereda"
+                  name="neighborhood"
+                  value={neighborhood}
+                  onChange={(e) => handleOnChange(e)}
+                />
               </Form.Group>
             </Row>
             <Row className="mb-3 fila-data">
-              <Form.Group as={Col} controlId="formGridEmail">
+              <Form.Group as={Col} controlId="formGridUrbanizacion">
                 <Form.Label>Urbanización / otros datos de ubicación</Form.Label>
                 <Form.Control
                   type="text"
                   placeholder="Urbanización / otros datos de ubicación"
+                  name="urbanization"
+                  value={urbanization}
+                  onChange={(e) => handleOnChange(e)}
                 />
               </Form.Group>
             </Row>
@@ -214,6 +434,9 @@ export function CrearRegistroCiudadano() {
       <Container className="button-contactos">
         <Button variant="primary" onClick={handleOnSubmit}>
           Guardar
+        </Button>
+        <Button variant="primary" onClick={pageHome}>
+          INICIO
         </Button>
       </Container>
     </>

@@ -1,38 +1,46 @@
 import { useState, useEffect } from "react";
 import { listCiudadanos } from "../../routes/contactos";
 import TableContactos from "./contactostable";
+import Swal from "sweetalert2";
 
 import "../../css/registrociudadano.css"
+
+import { AuthHeaders } from "../../components/authheader";
 
 
 export const ListCiudadanos = () => {
   const [ciudadanos, setCiudadanos] = useState([]);
-
-    let _header = {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-
-    let tokenAuthorization = localStorage.getItem("Authorization");
-
-    if (tokenAuthorization) {
-      _header.headers["Authorization"] = tokenAuthorization;
-    }
-
-
+useEffect(() => {
   const mostrarCiudadanos = async () => {
     try {
-      const { data } = await listCiudadanos(_header);
+      const authheader = AuthHeaders();
+      const { data } = await listCiudadanos(authheader);
       setCiudadanos(data);
     } catch (error) {
       console.log("Error desde el servidor verificar backend ", error);
     }
   };
 
-  useEffect(() => {
-    mostrarCiudadanos();
-  });
+     Swal.fire({
+       icon: "info",
+       title: "Listando contactos",
+       showConfirmButton: false,
+       timer: 1000,
+       didOpen: () => {
+         Swal.showLoading();
+       },
+     });
+     setTimeout(() => {
+       Swal.close();
+       mostrarCiudadanos();
+     }, 1000);
+
+
+  
+}, []);
+
+
+
 
   const DataTable = () => {
     let noReg = 1;

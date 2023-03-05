@@ -1,9 +1,22 @@
+h1 {
+  text-align: center;
+}
+
+.contenedor-datosPersonales .invalid-feedback{
+  font-size: xx-small;
+  margin: 0;
+  padding: 0;
+}
+
 .contenedor-datosPersonales {
   border: solid 1px;
   border-radius: 20px;
   width: 99%;
   min-height: max-content;
   max-height: min-content;
+    margin: 0;
+  padding: 0;
+ 
 }
 
 .contenedorContactoUbicacion {
@@ -14,11 +27,19 @@
   padding: 0;
 }
 
+.formDatosContacto .invalid-feedback{
+  font-size: xx-small;
+    margin: 0;
+  padding: 0;
+}
+
 .formDatosContacto {
   width: 49%;
   min-height: max-content;
   max-height: min-content;
   border-right: 1px solid;
+    margin: 0;
+  padding: 0;
   padding-right: 10px;
 }
 
@@ -29,10 +50,25 @@
   padding-left: 10px;
 }
 
-.button-contactos {
+.button-contactos.container {
   display: flex;
   justify-content: center;
-  padding-top: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  margin-left: 35px;
+  margin-right: 10px;
+}
+
+.btn.btn-primary{
+  display: flex;
+margin-left: 15px;
+margin-right: 35px;
+}
+
+.btn.btn-info{
+  display: flex;
+
+margin-right: 40px;
 }
 
 .fila-contactos .dato-contacto {
@@ -53,8 +89,17 @@
     margin: 0;
   }
 
+  .formDatosContacto{
+    height: 190px;
+
+  }
+
+  .formDatosUbicacion{
+    height: 190px;
+  }
+
   .form-control {
-    height: 10px;
+
     font-size: xx-small;
     padding: 0;
     margin: 0;

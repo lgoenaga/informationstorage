@@ -4,6 +4,7 @@ import { CrearRegistroUsuario } from "../../services/usuarios/usuariocrear";
 import BarraNavegacion from "../../components/header";
 import Footer from "../../components/footer";
 
+
 const ViewCrearUsuario = () => {
   return (
     <>

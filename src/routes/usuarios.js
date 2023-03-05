@@ -1,24 +1,21 @@
 import { Axios } from "../helpers/axios.config";
 
-
-
-export const listUsuarios = (_header) => {
- 
-  return Axios.get("usuarios", _header);
+export const listUsuarios = (authheader) => {
+  return Axios.get("usuarios", authheader);
 };
 
-export const createUsuario = (data, _header) => {
-  return Axios.post("usuarios/crear", data, _header);
+export const createUsuario = (data, authheader) => {
+  return Axios.post("usuarios/crear", data, authheader);
 };
 
-export const deleteUsuario = (user, _header) => {
-  return Axios.delete(`usuarios/${user}`, _header);
+export const deleteUsuario = (user, authheader) => {
+  return Axios.delete(`usuarios/${user}`, authheader);
 };
 
-export const updateUsuario = (userLogin, data) => {
-  return Axios.put(`usuarios/${userLogin}`, data);
+export const updateUsuario = (userLogin, data, authheader) => {
+  return Axios.put(`usuarios/${userLogin}`, data, authheader);
 };
 
-export const getUsuario = (user, _header) => {
-  return Axios.get(`usuarios/${user}`, _header);
+export const getUsuario = (user) => {
+  return Axios.get(`usuarios/${user}`);
 };

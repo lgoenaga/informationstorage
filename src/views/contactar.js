@@ -2,7 +2,7 @@ import React from "react";
 import BarraNavegacion from "../components/header";
 import Footer from "../components/footer";
 
-const ViewAsistencia = () => {
+const ViewContactar = () => {
   return (
     <>
       <BarraNavegacion />
@@ -12,4 +12,4 @@ const ViewAsistencia = () => {
   );
 };
 
-export default ViewAsistencia;
+export default ViewContactar;

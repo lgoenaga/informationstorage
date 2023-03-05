@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import Container from "react-bootstrap/Container";
@@ -21,15 +23,41 @@ function Login() {
     setValoresForm({ ...valoresForm, [name]: value });
   };
 
-  const validarUsuario =  async () => {
-    const { data } = await valiteUser(valoresForm);
-    if (data) {
-      console.log(data);
-      console.log("Usuario autorizado");
-      localStorage.setItem("Authorization", data.access_token);
-      navigate("/inicio");
-    } else {
+  const validarUsuario = async () => {
+    try {
+      const { data } = await valiteUser(valoresForm);
+
+      if (data) {
+        localStorage.setItem("Authorization", data.access_token);
+        Swal.fire({
+          icon: "success",
+          title: "Inicio Correcto",
+          showConfirmButton: false,
+          timer: 2000,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+        });
+        setTimeout(() => {
+          navigate("/inicio");
+          Swal.close();
+        }, 2000);
+      } 
+    } catch (error) {
       console.log("Datos no coinciden");
+      Swal.fire({
+        icon: "error",
+        title: "Inicio Incorrecto",
+        showConfirmButton: false,
+        timer: 2000,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+      setTimeout(() => {
+        Swal.close();
+      }, 2000);;
+      
     }
   };
 
@@ -38,7 +66,7 @@ function Login() {
 
     setValidated(true);
 
-     validarUsuario();
+    validarUsuario();
   };
 
   return (

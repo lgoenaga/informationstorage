@@ -14,6 +14,7 @@ import ViewUpdateCiudadano from "./views/contactos/contactoupdate";
 import ViewLugarVotacion from "./views/lugarvotacion";
 import ViewAsistencia from "./views/asistencia";
 import ViewLogin from "./views/login";
+import ViewContactar from "./views/contactar";
 
 const Rutas = () => {
   return (
@@ -33,6 +34,7 @@ const Rutas = () => {
         <Route exact path="/inicio" element={<ViewAdministracion />} />
         <Route exact path="/lugarvotacion" element={<ViewLugarVotacion />} />
         <Route exact path="/contactos" element={<ViewContactos />} />
+        <Route exact path="/Contactos/contactar" element ={<ViewContactar/>}/>
         <Route exact path="/asistencia" element={<ViewAsistencia />} />
         <Route exact path="/login" element={<ViewLogin />} />
         <Route exact path="/usuarios" element={<ViewUsuarios />} />
@@ -42,6 +44,7 @@ const Rutas = () => {
           path="/usuarios/:userLogin"
           element={<ViewUpdateUsuario />}
         />
+        <Route path="*" element={<ViewLogin />} />
       </Routes>
     </div>
   );

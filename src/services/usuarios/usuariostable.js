@@ -5,33 +5,87 @@ import { useNavigate } from "react-router-dom";
 
 import { BsFillPenFill, BsFillTrashFill } from "react-icons/bs";
 import { deleteUsuario } from "../../routes/usuarios";
+import { AuthHeaders } from "../../components/authheader";
+
+import Swal from "sweetalert2";
 
 const TableUsuarios = (props) => {
-  const { noReg, user, rol, estado} = props.obj;
+  const { noReg, user, rol, estado } = props.obj;
 
   const navigate = useNavigate();
 
   const borrarUsuario = async () => {
-  
+    Swal.fire({
+      title: "Desea eliminar el usuario? ",
+      html: "Deleting will be canceled in 10 <strong></strong> seconds.",
+      timer: 10000,
+      timerProgressBar: true,
+      showDenyButton: true,
+      showConfirmButton: true,
+      confirmButtonText: "Delete",
+      denyButtonText: "Not delete",
+    }).then(async (result) => {
+      try {
+        if (result.isConfirmed) {
+          const authheader = AuthHeaders();
+          await deleteUsuario(user, authheader);
 
-    try {
-       let _header = {
-         headers: {
-           "Content-Type": "application/json",
-         },
-       };
+          Swal.fire({
+            icon: "success",
+            title: "Usuario Eliminado",
+            showConfirmButton: false,
+            timer: 2000,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+          });
+          setTimeout(() => {
+            Swal.close();
+            window.location.reload();
+          }, 2000);
+        } else {
+          if (result.isDenied) {
+            Swal.fire({
+              icon: "info",
+              title: "Usuario no ha sido Eliminado",
+              showConfirmButton: false,
+              timer: 2000,
+              didOpen: () => {
+                Swal.showLoading();
+              },
+            });
+            setTimeout(() => {
+              Swal.close();
+            }, 2000);
+          }
+        }
+        if (result.dismiss === Swal.DismissReason.timer) {
+          Swal.fire({
+            icon: "error",
+            title: "Se ha superado el tiempo sin una respuesta",
+            showConfirmButton: false,
+            timer: 2000,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+          });
+          setTimeout(() => {
+            Swal.close();
+          }, 2000);
+        }
+      } catch (error) {
+        let mensaje;
+        mensaje = error.response.data;
 
-       let tokenAuthorization = localStorage.getItem("Authorization");
-
-       if (tokenAuthorization) {
-         _header.headers["Authorization"] = tokenAuthorization;
-       }
-      await deleteUsuario(user, _header);
-      console.log("Usuario Eliminado");
-      window.location.reload();
-    } catch (error) {
-      console.log("Usuario no se ha podido eliminar", error);
-    }
+        Swal.fire({
+          icon: "error",
+          title: mensaje,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+        Swal.showLoading();
+      }
+    });
   };
 
   return (
@@ -44,18 +98,18 @@ const TableUsuarios = (props) => {
 
         <td className="dato-contacto">
           <Button
-            variant="danger"
+            className="botones-mod"
+            variant="btn btn-outline-info"
+            onClick={() => navigate(`/usuarios/${user}`)}
+          >
+            <BsFillPenFill />
+          </Button>
+          <Button
+            variant="btn btn-outline-danger"
             onClick={borrarUsuario}
             className="botones-mod"
           >
             <BsFillTrashFill />
-          </Button>
-          <Button
-            className="botones-mod"
-            variant="info"
-            onClick={() => navigate(`/usuarios/${user}`)}
-          >
-            <BsFillPenFill />
           </Button>
         </td>
       </tr>

@@ -8,6 +8,7 @@ const ViewUsuarios = () => {
     <>
       <BarraNavegacion />
       <ListUsuarios />
+
       <Footer />
     </>
   );

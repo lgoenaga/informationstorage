@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Container } from "react-bootstrap";
+import Swal from "sweetalert2";
 
 import Button from "react-bootstrap/Button";
 
 import Form from "react-bootstrap/Form";
 
 import { updateUsuario, getUsuario } from "../../routes/usuarios";
+import { AuthHeaders } from "../../components/authheader";
 
 export const UpdateRegistroUsuario = () => {
   const navigate = useNavigate();
@@ -19,28 +21,50 @@ export const UpdateRegistroUsuario = () => {
 
   const { user = "", password = "", rol = "", estado = "" } = valoresForm;
 
+
+  const findFormErrors = () => {
+    const { user, password, rol, estado } = valoresForm;
+    const newErrors = {};
+
+    if (!user || user === "") newErrors.name = "cannot be blank!";
+
+    if (!rol || rol === "") newErrors.rol = "select a rol!";
+
+    if (!password || password === "") {
+      newErrors.password = "cannot be blank!";
+    } else {
+      if (password.length <= 4)
+        newErrors.password = "Password too short! Minimum 4 characters";
+    }
+
+    if (!estado || estado === "") newErrors.estado = "select a state!";
+
+    return newErrors;
+  };
+
   useEffect(() => {
     const mostrarusuario = async () => {
-      let _header = {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      };
-
-      let tokenAuthorization = localStorage.getItem("Authorization");
-
-      if (tokenAuthorization) {
-        _header.headers["Authorization"] = tokenAuthorization;
-      }
-
       try {
-        const { data } = await getUsuario(userLogin, _header);
+        const { data } = await getUsuario(userLogin);
         setUsuario(data);
       } catch (error) {
         console.log("Usuario no existe");
       }
     };
-    mostrarusuario();
+
+    Swal.fire({
+      icon: "info",
+      title: "Actualizar Usuario",
+      showConfirmButton: false,
+      timer: 1000,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+    setTimeout(() => {
+      Swal.close();
+      mostrarusuario();
+    }, 1000);
   }, [userLogin]);
 
   useEffect(() => {
@@ -75,15 +99,89 @@ export const UpdateRegistroUsuario = () => {
       estado,
     };
 
-    let data = "";
-    try {
-      data = await updateUsuario(userLogin, usuario);
-      console.log("Usuario actualizado correctamente");
-      console.log(data);
-      navigate("/usuarios");
-    } catch (error) {
-      console.log("Usuario no se pudo actualizar");
-    }
+    Swal.fire({
+      title: "Desea Actualizar el usuario? ",
+      html: "Updating will be canceled in 10 <strong></strong> seconds.",
+      timer: 10000,
+      timerProgressBar: true,
+      showDenyButton: true,
+      showConfirmButton: true,
+      confirmButtonText: "Update",
+      denyButtonText: "Not update",
+    }).then(async (result) => {
+      let data = "";
+      try {
+        if (result.isConfirmed) {
+          const authheader = AuthHeaders();
+          data = await updateUsuario(userLogin, usuario, authheader);
+          Swal.fire({
+            icon: "success",
+            title: "Usuario Actualizado",
+            showConfirmButton: false,
+            timer: 2000,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+          });
+          setTimeout(() => {
+            Swal.close();
+            navigate("/usuarios");
+          }, 2000);
+        } else {
+          if (result.isDenied) {
+            Swal.fire({
+              icon: "info",
+              title: "Usuario no ha sido actualizado",
+              showConfirmButton: false,
+              timer: 2000,
+              didOpen: () => {
+                Swal.showLoading();
+              },
+            });
+            setTimeout(() => {
+              Swal.close();
+            }, 2000);
+          }
+        }
+        if (result.dismiss === Swal.DismissReason.timer) {
+          Swal.fire({
+            icon: "error",
+            title: "Se ha superado el tiempo sin una respuesta",
+            showConfirmButton: false,
+            timer: 2000,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+          });
+          setTimeout(() => {
+            Swal.close();
+          }, 2000);
+        }
+
+      } catch (error) {
+        let mensaje;
+        const newErrors = findFormErrors();
+
+        if (Object.keys(newErrors).length > 0) {
+          mensaje = "Error en las validaciones";
+        } else {
+          mensaje = error.response.data;
+        }
+        Swal.fire({
+          icon: "error",
+          title: mensaje,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+        Swal.showLoading();
+      } finally {
+        if (data) {
+          setTimeout(() => {
+            Swal.close();
+          }, 2000);
+        }
+      }
+    });
   };
 
   return (
